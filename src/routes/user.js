@@ -9,7 +9,7 @@ const userAuth = require('../middleware/auth.user');
 const Otp = require('../models/Otp')
 const sendOTPtoResetPassword = require('../helper/otp.pass');
 
-router.post('/register',adminAuth, async (req, res) => {
+router.post('/register', adminAuth, async (req, res) => {
   try {
     const UserSchema = Joi.object({
       first_name: Joi.string().required(),
@@ -86,27 +86,50 @@ router.put('/update/:uuid', async (req, res) => {
   }
 });
 
-router.put('/update/status/:uuid',adminAuth, async(req,res)=>{
+router.put('/update/status/:uuid', adminAuth, async (req, res) => {
   try {
-      let uuid = req.params.uuid;
-      const UpdateSchema = Joi.object({
-          status : Joi.boolean().required()
-      })
+    let uuid = req.params.uuid;
+    const UpdateSchema = Joi.object({
+      status: Joi.boolean().required()
+    })
 
-      const validData = await UpdateSchema.validateAsync(req.body);
-      
-      await User.findOneAndUpdate({uuid : uuid},{is_active : validData.status},{new : true});
+    const validData = await UpdateSchema.validateAsync(req.body);
 
-      return res.status(200).send({
-          status : true,
-          message : "Successfully Updated"
-      })
+    await User.findOneAndUpdate({ uuid: uuid }, { is_active: validData.status }, { new: true });
+
+    return res.status(200).send({
+      status: true,
+      message: "Successfully Updated"
+    })
 
   } catch (error) {
-      return res.status(400).send({
-          status : false,
-          message : error.message
-      });       
+    return res.status(400).send({
+      status: false,
+      message: error.message
+    });
+  }
+});
+
+router.get("/view/:uuid", async (req, res) => {
+  try {
+    let uuid = req.params.uuid;
+    let result = await User.findOne({ uuid: uuid });
+    if (result) {
+      return res.status(200).send({
+        status: true,
+        data: result
+      });
+    } else {
+      return res.status(404).send({
+        status: false,
+        message: "Not found"
+      });
+    }
+  } catch (error) {
+    res.status(400).send({
+      status: false,
+      message: error.message
+    });
   }
 });
 

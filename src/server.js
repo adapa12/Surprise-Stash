@@ -9,6 +9,8 @@ const morgan = require('morgan');
 const helmet = require('helmet');
 
 const user = require('./routes/user');
+const Credit = require('./routes/TransactionCredit');
+const Debit = require('./routes/TransactionDebit')
 
 require('dotenv').config();
 
@@ -31,6 +33,8 @@ mongoose.connect(process.env.DB_URL, {
 app.use('/images/', express.static(__dirname + '/my-images'));
 
 app.use('/api/v1/user',user);
+app.use('/api/v1/transaction/credit',Credit);
+app.use('/api/v1/transaction/debit',Debit);
 
 app.listen(port, () => {
     console.log(`Server Listining On port : ${port}`)

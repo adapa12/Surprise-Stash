@@ -475,6 +475,31 @@ router.get('/profile/:uuid', async (req, res) => {
   }
 });
 
+router.get('/dropdown/list', async (req, res) => {
+  try {
+    let result = await User.aggregate([
+      {
+        $match: {
+          is_active: true,
+          is_deleted: false,
+          role : "user"
+        }
+      },
+    ]);
+
+    return res.status(200).send({
+      status: true,
+      message: "Data Fetched Successfully",
+      data: result
+    });
+
+  } catch (error) {
+    return res.status(400).send({
+      status: false,
+      message: error.message
+    });
+  }
+});
 
 function generateOTP() {
   var digits = '0123456789';

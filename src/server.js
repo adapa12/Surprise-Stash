@@ -11,6 +11,7 @@ const helmet = require('helmet');
 const user = require('./routes/user');
 const Credit = require('./routes/TransactionCredit');
 const Debit = require('./routes/TransactionDebit')
+const upload = require('./routes/upload')
 
 require('dotenv').config();
 
@@ -35,6 +36,7 @@ app.use('/images/', express.static(__dirname + '/my-images'));
 app.use('/api/v1/user',user);
 app.use('/api/v1/transaction/credit',Credit);
 app.use('/api/v1/transaction/debit',Debit);
+app.use('/api/v1/upload', upload);
 
 app.listen(port, () => {
     console.log(`Server Listining On port : ${port}`)

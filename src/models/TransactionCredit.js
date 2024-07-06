@@ -28,8 +28,8 @@ const TransactionCreditSchema = new mongoose.Schema({
         type : String,
         required : true
     },
-    approved : {
-        type : String,
+    is_approved : {
+        type : Boolean,
         require : false,
         default : false
     },

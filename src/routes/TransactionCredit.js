@@ -6,9 +6,6 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Credit = require('../models/TransactionCredit')
 const adminAuth = require('../middleware/auth.admin');
-const userAuth = require('../middleware/auth.user');
-const Otp = require('../models/Otp')
-const sendOTPtoResetPassword = require('../helper/otp.pass');
 
 
 router.post('/', async (req, res) => {
@@ -16,6 +13,9 @@ router.post('/', async (req, res) => {
     const CreditSchema = Joi.object({
       user_uuid: Joi.string().required(),
       amount: Joi.string().required(),
+      type : Joi.string().required(),
+      paid_to : Joi.string().required(),
+      paid_number : Joi.string().required(), 
       utr: Joi.string().required(),
       image: Joi.string().required(),
     });

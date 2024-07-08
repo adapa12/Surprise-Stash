@@ -20,6 +20,18 @@ const TransactionCreditSchema = new mongoose.Schema({
         type : String,
         required : true
     },
+    type : {
+        type : String,
+        required : true
+    },
+    paid_to : {
+        type : String,
+        required : true
+    },
+    paid_number : {
+        type : String,
+        required : true
+    },
     utr : {
         type : String,
         required : true

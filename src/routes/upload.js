@@ -23,7 +23,7 @@ router.post('/image', upload.single('file'), async(req, res)=>{
             });
           } else {
             req.file.image_url = `${process.env.IMAGE_URL}${req.file.filename}`;
-            console.log( req.file.image_url)
+            console.log( req.file.image_url )
             const image = req.file;
             console.log('file received');
             return res.send({

@@ -13,6 +13,7 @@ router.post('/', async (req, res) => {
     try {
       const DebitSchema = Joi.object({
         purpose : Joi.string().required(),
+        type : Joi.string().required(),
         amount: Joi.string().required(),
         bill: Joi.string().required()
       });

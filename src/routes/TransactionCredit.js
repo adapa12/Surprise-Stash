@@ -6,9 +6,10 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Credit = require('../models/TransactionCredit')
 const adminAuth = require('../middleware/auth.admin');
+const auth = require('../middleware/auth.middleware')
 
 
-router.post('/', async (req, res) => {
+router.post('/', auth, async (req, res) => {
   try {
     const CreditSchema = Joi.object({
       user_uuid: Joi.string().required(),
@@ -21,6 +22,11 @@ router.post('/', async (req, res) => {
     });
 
     const validData = await CreditSchema.validateAsync(req.body);
+
+
+    if (req.user && req.user.role === 'management') {
+      validData.approved_status = "Accepted";
+    }
     
     let result = await Credit.create(validData);
 

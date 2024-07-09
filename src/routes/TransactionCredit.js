@@ -21,7 +21,7 @@ router.post('/', async (req, res) => {
     });
 
     const validData = await CreditSchema.validateAsync(req.body);
-
+    
     let result = await Credit.create(validData);
 
     return res.status(200).send({
@@ -249,8 +249,9 @@ router.put("/update/status", async(req, res)=>{
   try {
 
       let UpdateSchema = Joi.object({
-          order_uuid : Joi.string().required(),
-          approved_status : Joi.string().valid('Pending','Accepted','Rejected').required()
+          credit_uuid : Joi.string().required(),
+          approved_status : Joi.string().valid('Pending','Accepted','Rejected').required(),
+          comments : Joi.string().allow("")
       })
 
       let validData = await UpdateSchema.validateAsync(req.body);

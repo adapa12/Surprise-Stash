@@ -45,6 +45,11 @@ const TransactionCreditSchema = new mongoose.Schema({
         enum : ['Pending','Accepted','Rejected'],
         default : 'Pending'
     },
+    comments : {
+        type : String,
+        required : false,
+        default : ""
+    },
     is_approved : {
         type : Boolean,
         require : false,

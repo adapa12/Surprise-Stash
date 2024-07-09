@@ -245,4 +245,24 @@ router.put('/approved/status/:uuid', async (req, res) => {
 
 })
 
+router.put("/update/status", async(req, res)=>{
+  try {
+
+      let UpdateSchema = Joi.object({
+          order_uuid : Joi.string().required(),
+          approved_status : Joi.string().valid('Pending','Accepted','Rejected').required()
+      })
+
+      let validData = await UpdateSchema.validateAsync(req.body);
+
+      await Credit.findOneAndUpdate({uuid : validData.order_uuid},{approved_status:validData.approved_status});
+      return res.status(200).send({
+          success : true,
+          message : 'Successfully Updated.'
+      });
+  } catch (error) {
+      return res.status(400).send(error.message);
+  }
+});
+
 module.exports = router

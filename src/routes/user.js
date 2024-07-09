@@ -8,6 +8,8 @@ const adminAuth = require('../middleware/auth.admin');
 const userAuth = require('../middleware/auth.user');
 const Otp = require('../models/Otp')
 const sendOTPtoResetPassword = require('../helper/otp.pass');
+const Credit = require('../models/TransactionCredit')
+const Debit = require('../models/TransactionDebit')
 
 router.post('/register', adminAuth, async (req, res) => {
   try {
@@ -494,6 +496,66 @@ router.get('/dropdown/list', async (req, res) => {
     });
 
   } catch (error) {
+    return res.status(400).send({
+      status: false,
+      message: error.message
+    });
+  }
+});
+
+router.get('/dashboard',async(req,res)=>{
+  try {
+
+    const result = await Credit.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalAmount: { 
+            $sum: { 
+              $convert: {
+                input: "$amount",
+                to: "double",
+                onError: 0,
+                onNull: 0 
+              }
+            }
+          }
+        }
+      }
+    ]);
+
+    const totalAmount = result.length > 0 ? result[0].totalAmount : 0;
+
+    const debitResult = await Debit.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalAmount: { 
+            $sum: { 
+              $convert: {
+                input: "$amount",
+                to: "double",
+                onError: 0, 
+                onNull: 0 
+              }
+            }
+          }
+        }
+      }
+    ]);
+
+    const totalDebitAmount = debitResult.length > 0 ? debitResult[0].totalAmount : 0;
+    console.log("Total debit amount calculated:", totalDebitAmount);
+
+    return res.status(200).send({
+      status: true,
+      message: "dashboard data",
+      totalCreditAmount: totalAmount,
+      totalDebitAmount: totalDebitAmount
+
+    });
+  } catch (error) {
+    console.error("Error:", error); // Log the error for debugging
     return res.status(400).send({
       status: false,
       message: error.message

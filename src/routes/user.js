@@ -509,6 +509,13 @@ router.get('/dashboard', async (req, res) => {
     let active_users = await User.countDocuments({ role: "user", is_active: true });
     let inactive_users = await User.countDocuments({ role: "user", is_active: false });
 
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+
     const result = await Credit.aggregate([
       {
         $group: {
@@ -526,8 +533,34 @@ router.get('/dashboard', async (req, res) => {
         }
       }
     ]);
+    const result1 = await Credit.aggregate([
+    {
+      $match: {
+        createdAt: {
+          $gte: startOfToday,
+          $lte: endOfToday
+        }
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        todayAmount: {
+          $sum: {
+            $convert: {
+              input: "$amount",
+              to: "double",
+              onError: 0,
+              onNull: 0
+            }
+          }
+        }
+      }
+    }
+  ])
 
     const totalCreditAmount = result.length > 0 ? result[0].totalAmount : 0;
+    const todayCreditAmount = result1.length > 0 ? result1[0].todayAmount : 0;
 
     const debitResult = await Debit.aggregate([
       {
@@ -546,20 +579,47 @@ router.get('/dashboard', async (req, res) => {
         }
       }
     ]);
+    const todaydebitResult = await Debit.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: startOfToday,
+            $lte: endOfToday
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          todayAmount: {
+            $sum: {
+              $convert: {
+                input: "$amount",
+                to: "double",
+                onError: 0,
+                onNull: 0
+              }
+            }
+          }
+        }
+      }
+    ])
 
     const totalDebitAmount = debitResult.length > 0 ? debitResult[0].totalAmount : 0;
-    console.log("Total debit amount calculated:", totalDebitAmount);
-
-  const totalCreditDebitAmount = totalCreditAmount + totalDebitAmount
+    const todayDebitAmount = todaydebitResult.length > 0 ? todaydebitResult[0].todayAmount : 0;
+    
+    const totalCreditDebitAmount = totalCreditAmount + totalDebitAmount
 
     return res.status(200).send({
       status: true,
       message: "dashboard data",
       totalCreditAmount: totalCreditAmount,
+      todayCreditAmount : todayCreditAmount,
       totalDebitAmount: totalDebitAmount,
-      totalCreditDebitAmount : totalCreditDebitAmount,
+      todayDebitAmount : todayDebitAmount,
+      totalCreditDebitAmount: totalCreditDebitAmount,
       active_users: active_users,
-      inactive_users : inactive_users
+      inactive_users: inactive_users
 
     });
   } catch (error) {

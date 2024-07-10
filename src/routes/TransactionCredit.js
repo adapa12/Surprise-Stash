@@ -43,6 +43,38 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
+router.put('/update/:uuid', async (req, res) => {
+  try {
+    const UpdateSchema = Joi.object({
+      user_uuid: Joi.string().required(),
+      amount: Joi.string().required(),
+      type : Joi.string().required(),
+      paid_to : Joi.string().required(),
+      paid_number : Joi.string().required(), 
+      utr: Joi.string().required(),
+      image: Joi.string().required(),
+    });
+    const validData = await UpdateSchema.validateAsync(req.body);
+
+    Credit.findOneAndUpdate({ uuid: req.params.uuid }, validData, { new: true })
+      .then(data => {
+        if (!data) res.status(404).send({
+          status: false,
+          message: "Cannot Update"
+        });
+        else res.status(200).send({
+          status: true,
+          message: "Updated Successfully",
+          data: data
+        });
+      })
+  } catch (error) {
+    return res.status(400).send({
+      status: false,
+      message: error.message
+    });
+  }
+});
 
 router.get("/view/:uuid", async (req, res) => {
   try {

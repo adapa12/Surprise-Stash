@@ -10,131 +10,161 @@ const userAuth = require('../middleware/auth.user');
 
 
 router.post('/', async (req, res) => {
-    try {
-      const DebitSchema = Joi.object({
-        purpose : Joi.string().required(),
-        type : Joi.string().required(),
-        amount: Joi.string().required(),
-        bill: Joi.string().required()
-      });
-  
-      const validData = await DebitSchema.validateAsync(req.body);
+  try {
+    const DebitSchema = Joi.object({
+      purpose: Joi.string().required(),
+      type: Joi.string().required(),
+      amount: Joi.string().required(),
+      bill: Joi.string().required()
+    });
 
-      let result = await Debit.create(validData);
-  
+    const validData = await DebitSchema.validateAsync(req.body);
+
+    let result = await Debit.create(validData);
+
+    return res.status(200).send({
+      status: true,
+      message: " Debited Bill Added Sucessfully",
+      data: result,
+    });
+  } catch (error) {
+    return res.status(400).send({
+      status: false,
+      message: error.message
+    });
+  }
+});
+
+router.put('/update/:uuid', async (req, res) => {
+  try {
+    const UpdateSchema = Joi.object({
+      purpose: Joi.string().required(),
+      type: Joi.string().required(),
+      amount: Joi.string().required(),
+      bill: Joi.string().required()
+    });
+    const validData = await UpdateSchema.validateAsync(req.body);
+
+    Debit.findOneAndUpdate({ uuid: req.params.uuid }, validData, { new: true })
+      .then(data => {
+        if (!data) res.status(404).send({
+          status: false,
+          message: "Cannot Update"
+        });
+        else res.status(200).send({
+          status: true,
+          message: "Updated Successfully",
+          data: data
+        });
+      })
+  } catch (error) {
+    return res.status(400).send({
+      status: false,
+      message: error.message
+    });
+  }
+});
+
+
+router.get("/view/:uuid", async (req, res) => {
+  try {
+    let uuid = req.params.uuid;
+    let result = await Debit.findOne({ uuid: uuid });
+    if (result) {
       return res.status(200).send({
         status: true,
-        message: " Debited Bill Added Sucessfully",
-        data: result,
+        data: result
       });
-    } catch (error) {
-      return res.status(400).send({
+    } else {
+      return res.status(404).send({
         status: false,
-        message: error.message
+        message: "Not found"
       });
     }
-  });
+  } catch (error) {
+    res.status(400).send({
+      status: false,
+      message: error.message
+    });
+  }
+});
 
+router.get('/list', async (req, res) => {
+  try {
+    let { page, limit, search } = req.query;
 
-  router.get("/view/:uuid", async (req, res) => {
-    try {
-      let uuid = req.params.uuid;
-      let result = await Debit.findOne({ uuid: uuid });
-      if (result) {
-        return res.status(200).send({
-          status: true,
-          data: result
-        });
-      } else {
-        return res.status(404).send({
-          status: false,
-          message: "Not found"
-        });
-      }
-    } catch (error) {
-      res.status(400).send({
-        status: false,
-        message: error.message
-      });
-    }
-  });
+    if (page == "" || page == undefined) page = 0;
+    if (limit == "" || limit == undefined) limit = 10;
 
-  router.get('/list', async (req, res) => {
-    try {
-      let { page, limit, search } = req.query;
-  
-      if (page == "" || page == undefined) page = 0;
-      if (limit == "" || limit == undefined) limit = 10;
-  
-      let skip = Number(page) * Number(limit);
-  
-      let result = await Debit.aggregate([
-        {
-          $match: {
-            is_deleted: false,
-            $or: [
-              { "amount": { $regex: `${search}`, $options: 'i' } },
-            ]
-          }
-        },
-        {
-          "$set": {
-            "image": {
-              $cond: {
-                if: {
-                  $ne: ["$image", ""]
-                },
-                then: {
-                  "$concat": [
-                    process.env.IMAGE_URL,
-                    "$image"
-                  ]
-                },
-                else: {
-                  "$concat": [
-                    ''
-                  ]
-                }
+    let skip = Number(page) * Number(limit);
+
+    let result = await Debit.aggregate([
+      {
+        $match: {
+          is_deleted: false,
+          $or: [
+            { "amount": { $regex: `${search}`, $options: 'i' } },
+          ]
+        }
+      },
+      {
+        "$set": {
+          "bill": {
+            $cond: {
+              if: {
+                $ne: ["$bill", ""]
+              },
+              then: {
+                "$concat": [
+                  process.env.IMAGE_URL,
+                  "$bill"
+                ]
+              },
+              else: {
+                "$concat": [
+                  ''
+                ]
               }
             }
           }
-        },
-        {
-          $sort: { createdAt: -1 }
-        },
-        {
-          $skip: skip
-        },
-        {
-          $limit: Number(limit)
         }
-      ]);
-  
-      let results = await Debit.aggregate([
-        {
-          $match: {
-            is_deleted: false,
-            $or: [
-              { "amount": { $regex: `${search}`, $options: 'i' } }
-            ]
-          }
-        }
-      ]);
-  
-      return res.status(200).send({
-        status: true,
-        message: "Data Fetched Successfully",
-        count: results.length,
-        data: result
-      });
-  
-    } catch (error) {
-      return res.status(400).send({
-        status: 'error',
-        message: error.message
-      });
-    }
-  });
+      },
+      {
+        $sort: { createdAt: -1 }
+      },
+      {
+        $skip: skip
+      },
+      {
+        $limit: Number(limit)
+      }
+    ]);
 
-  
-  module.exports = router
+    let results = await Debit.aggregate([
+      {
+        $match: {
+          is_deleted: false,
+          $or: [
+            { "amount": { $regex: `${search}`, $options: 'i' } }
+          ]
+        }
+      }
+    ]);
+
+    return res.status(200).send({
+      status: true,
+      message: "Data Fetched Successfully",
+      count: results.length,
+      data: result
+    });
+
+  } catch (error) {
+    return res.status(400).send({
+      status: 'error',
+      message: error.message
+    });
+  }
+});
+
+
+module.exports = router

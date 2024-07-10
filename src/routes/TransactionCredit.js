@@ -14,9 +14,9 @@ router.post('/', auth, async (req, res) => {
     const CreditSchema = Joi.object({
       user_uuid: Joi.string().required(),
       amount: Joi.string().required(),
-      type : Joi.string().required(),
-      paid_to : Joi.string().required(),
-      paid_number : Joi.string().required(), 
+      type: Joi.string().required(),
+      paid_to: Joi.string().required(),
+      paid_number: Joi.string().required(),
       utr: Joi.string().required(),
       image: Joi.string().required(),
     });
@@ -27,7 +27,7 @@ router.post('/', auth, async (req, res) => {
     if (req.user && req.user.role === 'management') {
       validData.approved_status = "Accepted";
     }
-    
+
     let result = await Credit.create(validData);
 
     return res.status(200).send({
@@ -48,9 +48,9 @@ router.put('/update/:uuid', async (req, res) => {
     const UpdateSchema = Joi.object({
       user_uuid: Joi.string().required(),
       amount: Joi.string().required(),
-      type : Joi.string().required(),
-      paid_to : Joi.string().required(),
-      paid_number : Joi.string().required(), 
+      type: Joi.string().required(),
+      paid_to: Joi.string().required(),
+      paid_number: Joi.string().required(),
       utr: Joi.string().required(),
       image: Joi.string().required(),
     });
@@ -195,6 +195,14 @@ router.get('/admin/list', async (req, res) => {
         }
       },
       {
+        $lookup: {
+          from: 'users',
+          localField: 'user_uuid',
+          foreignField: 'uuid',
+          as: 'user'
+        }
+      },
+      {
         "$set": {
           "image": {
             $cond: {
@@ -276,31 +284,31 @@ router.put('/approved/status/:uuid', async (req, res) => {
 
   } catch (error) {
     return res.status(400).send({
-      status : false,
-      message : error.message
+      status: false,
+      message: error.message
     })
   }
 
 })
 
-router.put("/update/status", async(req, res)=>{
+router.put("/update/status", async (req, res) => {
   try {
 
-      let UpdateSchema = Joi.object({
-          credit_uuid : Joi.string().required(),
-          approved_status : Joi.string().valid('Pending','Accepted','Rejected').required(),
-          comments : Joi.string().allow("")
-      })
+    let UpdateSchema = Joi.object({
+      credit_uuid: Joi.string().required(),
+      approved_status: Joi.string().valid('Pending', 'Accepted', 'Rejected').required(),
+      comments: Joi.string().allow("")
+    })
 
-      let validData = await UpdateSchema.validateAsync(req.body);
+    let validData = await UpdateSchema.validateAsync(req.body);
 
-      await Credit.findOneAndUpdate({uuid : validData.order_uuid},{approved_status:validData.approved_status});
-      return res.status(200).send({
-          success : true,
-          message : 'Successfully Updated.'
-      });
+    await Credit.findOneAndUpdate({ uuid: validData.order_uuid }, { approved_status: validData.approved_status });
+    return res.status(200).send({
+      success: true,
+      message: 'Successfully Updated.'
+    });
   } catch (error) {
-      return res.status(400).send(error.message);
+    return res.status(400).send(error.message);
   }
 });
 

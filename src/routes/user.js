@@ -484,7 +484,7 @@ router.get('/dropdown/list', async (req, res) => {
         $match: {
           is_active: true,
           is_deleted: false,
-          role : "user"
+          role: "user"
         }
       },
     ]);
@@ -503,20 +503,23 @@ router.get('/dropdown/list', async (req, res) => {
   }
 });
 
-router.get('/dashboard',async(req,res)=>{
+router.get('/dashboard', async (req, res) => {
   try {
+
+    let active_users = await User.countDocuments({ role: "user", is_active: true });
+    let inactive_users = await User.countDocuments({ role: "user", is_active: false });
 
     const result = await Credit.aggregate([
       {
         $group: {
           _id: null,
-          totalAmount: { 
-            $sum: { 
+          totalAmount: {
+            $sum: {
               $convert: {
                 input: "$amount",
                 to: "double",
                 onError: 0,
-                onNull: 0 
+                onNull: 0
               }
             }
           }
@@ -524,19 +527,19 @@ router.get('/dashboard',async(req,res)=>{
       }
     ]);
 
-    const totalAmount = result.length > 0 ? result[0].totalAmount : 0;
+    const totalCreditAmount = result.length > 0 ? result[0].totalAmount : 0;
 
     const debitResult = await Debit.aggregate([
       {
         $group: {
           _id: null,
-          totalAmount: { 
-            $sum: { 
+          totalAmount: {
+            $sum: {
               $convert: {
                 input: "$amount",
                 to: "double",
-                onError: 0, 
-                onNull: 0 
+                onError: 0,
+                onNull: 0
               }
             }
           }
@@ -547,11 +550,16 @@ router.get('/dashboard',async(req,res)=>{
     const totalDebitAmount = debitResult.length > 0 ? debitResult[0].totalAmount : 0;
     console.log("Total debit amount calculated:", totalDebitAmount);
 
+  const totalCreditDebitAmount = totalCreditAmount + totalDebitAmount
+
     return res.status(200).send({
       status: true,
       message: "dashboard data",
-      totalCreditAmount: totalAmount,
-      totalDebitAmount: totalDebitAmount
+      totalCreditAmount: totalCreditAmount,
+      totalDebitAmount: totalDebitAmount,
+      totalCreditDebitAmount : totalCreditDebitAmount,
+      active_users: active_users,
+      inactive_users : inactive_users
 
     });
   } catch (error) {

@@ -508,6 +508,7 @@ router.get('/dashboard', async (req, res) => {
 
     let active_users = await User.countDocuments({ role: "user", is_active: true });
     let inactive_users = await User.countDocuments({ role: "user", is_active: false });
+    let users = await User.countDocuments({ role: "user" });
 
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
@@ -618,6 +619,7 @@ router.get('/dashboard', async (req, res) => {
       totalDebitAmount: totalDebitAmount,
       todayDebitAmount : todayDebitAmount,
       totalCreditDebitAmount: totalCreditDebitAmount,
+      total_users : users,
       active_users: active_users,
       inactive_users: inactive_users
 

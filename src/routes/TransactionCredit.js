@@ -101,14 +101,29 @@ router.get("/view/:uuid", async (req, res) => {
 
 router.get('/user/list', async (req, res) => {
   try {
-    let { page, limit, search } = req.query;
+    let { page, limit, search, user_uuid } = req.query;
 
     if (page == "" || page == undefined) page = 0;
     if (limit == "" || limit == undefined) limit = 10;
 
     let skip = Number(page) * Number(limit);
 
+    if (user_uuid == "" || user_uuid == undefined) {
+      return res.status(400).send({
+        status: false,
+        message: "User Uuid is required"
+      });
+    }
+
+    let match = {
+      user_uuid: user_uuid,
+      is_deleted: false,
+    }
+
     let result = await Credit.aggregate([
+      {
+        $match: { ...match }
+      },
       {
         $match: {
           is_deleted: false,
@@ -151,6 +166,9 @@ router.get('/user/list', async (req, res) => {
     ]);
 
     let results = await Credit.aggregate([
+      {
+        $match: { ...match }
+      },
       {
         $match: {
           is_deleted: false,

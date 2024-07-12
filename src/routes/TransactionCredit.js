@@ -133,6 +133,14 @@ router.get('/user/list', async (req, res) => {
         }
       },
       {
+        $lookup: {
+          from: 'users',
+          localField: 'user_uuid',
+          foreignField: 'uuid',
+          as: 'user'
+        }
+      },
+      {
         "$set": {
           "image": {
             $cond: {

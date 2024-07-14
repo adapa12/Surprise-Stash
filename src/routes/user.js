@@ -10,6 +10,7 @@ const Otp = require('../models/Otp')
 const sendOTPtoResetPassword = require('../helper/otp.pass');
 const Credit = require('../models/TransactionCredit')
 const Debit = require('../models/TransactionDebit')
+const sendSMS = require('../helper/mail')
 
 router.post('/register', adminAuth, async (req, res) => {
   try {
@@ -39,7 +40,20 @@ router.post('/register', adminAuth, async (req, res) => {
     validData.password = await bcrypt.hash(validData.password, 10);
 
     let user = await User.create(validData);
-    sendOTPtoResetPassword(req.body.email);
+    
+    const emailData = {
+      from_email: "adapaanvesh.a@gmail.com",
+      password: "arls ibgh rubz nbyg",
+      email: user.email,
+      subject: "Welcome to Surprise",
+      fileName: "register.ejs",
+      "mailData" : {
+        "name" : user.full_name,
+        "email" : user.email,
+    },
+    };
+    await sendSMS(emailData);
+    // sendOTPtoResetPassword(req.body.email);
 
     return res.status(200).send({
       status: true,
@@ -535,30 +549,30 @@ router.get('/dashboard', async (req, res) => {
       }
     ]);
     const result1 = await Credit.aggregate([
-    {
-      $match: {
-        createdAt: {
-          $gte: startOfToday,
-          $lte: endOfToday
+      {
+        $match: {
+          createdAt: {
+            $gte: startOfToday,
+            $lte: endOfToday
+          }
         }
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        todayAmount: {
-          $sum: {
-            $convert: {
-              input: "$amount",
-              to: "double",
-              onError: 0,
-              onNull: 0
+      },
+      {
+        $group: {
+          _id: null,
+          todayAmount: {
+            $sum: {
+              $convert: {
+                input: "$amount",
+                to: "double",
+                onError: 0,
+                onNull: 0
+              }
             }
           }
         }
       }
-    }
-  ])
+    ])
 
     const totalCreditAmount = result.length > 0 ? result[0].totalAmount : 0;
     const todayCreditAmount = result1.length > 0 ? result1[0].todayAmount : 0;
@@ -608,20 +622,143 @@ router.get('/dashboard', async (req, res) => {
 
     const totalDebitAmount = debitResult.length > 0 ? debitResult[0].totalAmount : 0;
     const todayDebitAmount = todaydebitResult.length > 0 ? todaydebitResult[0].todayAmount : 0;
-    
+
     const totalCreditDebitAmount = totalCreditAmount + totalDebitAmount
 
     return res.status(200).send({
       status: true,
       message: "dashboard data",
       totalCreditAmount: totalCreditAmount,
-      todayCreditAmount : todayCreditAmount,
+      todayCreditAmount: todayCreditAmount,
       totalDebitAmount: totalDebitAmount,
-      todayDebitAmount : todayDebitAmount,
+      todayDebitAmount: todayDebitAmount,
       totalCreditDebitAmount: totalCreditDebitAmount,
-      total_users : users,
+      total_users: users,
       active_users: active_users,
       inactive_users: inactive_users
+
+    });
+  } catch (error) {
+    console.error("Error:", error); // Log the error for debugging
+    return res.status(400).send({
+      status: false,
+      message: error.message
+    });
+  }
+});
+
+router.get('user//dashboard', async (req, res) => {
+  try {
+
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+
+    const result = await Credit.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalAmount: {
+            $sum: {
+              $convert: {
+                input: "$amount",
+                to: "double",
+                onError: 0,
+                onNull: 0
+              }
+            }
+          }
+        }
+      }
+    ]);
+    const result1 = await Credit.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: startOfToday,
+            $lte: endOfToday
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          todayAmount: {
+            $sum: {
+              $convert: {
+                input: "$amount",
+                to: "double",
+                onError: 0,
+                onNull: 0
+              }
+            }
+          }
+        }
+      }
+    ])
+
+    const totalCreditAmount = result.length > 0 ? result[0].totalAmount : 0;
+    const todayCreditAmount = result1.length > 0 ? result1[0].todayAmount : 0;
+
+    const debitResult = await Debit.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalAmount: {
+            $sum: {
+              $convert: {
+                input: "$amount",
+                to: "double",
+                onError: 0,
+                onNull: 0
+              }
+            }
+          }
+        }
+      }
+    ]);
+    const todaydebitResult = await Debit.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: startOfToday,
+            $lte: endOfToday
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          todayAmount: {
+            $sum: {
+              $convert: {
+                input: "$amount",
+                to: "double",
+                onError: 0,
+                onNull: 0
+              }
+            }
+          }
+        }
+      }
+    ])
+
+    const totalDebitAmount = debitResult.length > 0 ? debitResult[0].totalAmount : 0;
+    const todayDebitAmount = todaydebitResult.length > 0 ? todaydebitResult[0].todayAmount : 0;
+
+    const totalCreditDebitAmount = totalCreditAmount + totalDebitAmount
+
+    return res.status(200).send({
+      status: true,
+      message: "dashboard data",
+      totalCreditAmount: totalCreditAmount,
+      todayCreditAmount: todayCreditAmount,
+      totalDebitAmount: totalDebitAmount,
+      todayDebitAmount: todayDebitAmount,
+      totalCreditDebitAmount: totalCreditDebitAmount,
 
     });
   } catch (error) {

@@ -1,17 +1,20 @@
 'use strict'
 
+const fs = require('fs');
 const router = require('express').Router();
 const multer = require('multer');
 
 const storage = multer.diskStorage({
-    destination: function(req, file, callback) {
-      callback(null, __dirname+'../../my-images');
-    },
-    filename: function (req, file, callback) {
-      callback(null, Date.now() + '-' + file.originalname);
-    }
-});
+  destination: (req, file, cb) => {
+      fs.mkdir('', (err) => {
+          cb(null, __dirname + '../../my-images');
+      });
+  },
+  filename: (req, file, cb) => {
 
+      cb(null, new Date().getTime() + "-" + file.originalname);
+  }
+});
 const upload = multer({ storage: storage });
 
 router.post('/image', upload.single('file'), async(req, res)=>{

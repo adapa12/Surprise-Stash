@@ -518,7 +518,7 @@ router.get('/dropdown/list', async (req, res) => {
   }
 });
 
-router.get('/dashboard', async (req, res) => {
+router.get('/admin/dashboard', adminAuth, async (req, res) => {
   try {
 
     let active_users = await User.countDocuments({ role: "user", is_active: true });
@@ -648,7 +648,7 @@ router.get('/dashboard', async (req, res) => {
   }
 });
 
-router.get('user//dashboard', async (req, res) => {
+router.get('/dashboard',userAuth, async (req, res) => {
   try {
 
     const startOfToday = new Date();
@@ -656,7 +656,8 @@ router.get('user//dashboard', async (req, res) => {
 
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);
-
+    
+    const userUuid = req.user.uuid;
 
     const result = await Credit.aggregate([
       {
@@ -700,6 +701,55 @@ router.get('user//dashboard', async (req, res) => {
         }
       }
     ])
+    const userCreditResult = await Credit.aggregate([
+      {
+        $match: {
+          user_uuid: userUuid
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalAmount: {
+            $sum: {
+              $convert: {
+                input: "$amount",
+                to: "double",
+                onError: 0,
+                onNull: 0
+              }
+            }
+          }
+        }
+      }
+    ]);
+
+    const todayUserCreditResult = await Credit.aggregate([
+      {
+        $match: {
+          user_uuid: userUuid,
+          createdAt: {
+            $gte: startOfToday,
+            $lte: endOfToday
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          todayAmount: {
+            $sum: {
+              $convert: {
+                input: "$amount",
+                to: "double",
+                onError: 0,
+                onNull: 0
+              }
+            }
+          }
+        }
+      }
+    ]);
 
     const totalCreditAmount = result.length > 0 ? result[0].totalAmount : 0;
     const todayCreditAmount = result1.length > 0 ? result1[0].todayAmount : 0;
@@ -747,8 +797,65 @@ router.get('user//dashboard', async (req, res) => {
       }
     ])
 
+    const userDebitResult = await Debit.aggregate([
+      {
+        $match: {
+          user_uuid: userUuid
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalAmount: {
+            $sum: {
+              $convert: {
+                input: "$amount",
+                to: "double",
+                onError: 0,
+                onNull: 0
+              }
+            }
+          }
+        }
+      }
+    ]);
+
+    const todayUserDebitResult = await Debit.aggregate([
+      {
+        $match: {
+          user_uuid: userUuid,
+          createdAt: {
+            $gte: startOfToday,
+            $lte: endOfToday
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          todayAmount: {
+            $sum: {
+              $convert: {
+                input: "$amount",
+                to: "double",
+                onError: 0,
+                onNull: 0
+              }
+            }
+          }
+        }
+      }
+    ]);
+
+
     const totalDebitAmount = debitResult.length > 0 ? debitResult[0].totalAmount : 0;
     const todayDebitAmount = todaydebitResult.length > 0 ? todaydebitResult[0].todayAmount : 0;
+
+    const totalUserCreditAmount = userCreditResult.length > 0 ? userCreditResult[0].totalAmount : 0;
+    const todayUserCreditAmount = todayUserCreditResult.length > 0 ? todayUserCreditResult[0].todayAmount : 0;
+
+    const totalUserDebitAmount = userDebitResult.length > 0 ? userDebitResult[0].totalAmount : 0;
+    const todayUserDebitAmount = todayUserDebitResult.length > 0 ? todayUserDebitResult[0].todayAmount : 0;
 
     const totalCreditDebitAmount = totalCreditAmount + totalDebitAmount
 
@@ -760,6 +867,10 @@ router.get('user//dashboard', async (req, res) => {
       totalDebitAmount: totalDebitAmount,
       todayDebitAmount: todayDebitAmount,
       totalCreditDebitAmount: totalCreditDebitAmount,
+      totalUserCreditAmount: totalUserCreditAmount,
+      todayUserCreditAmount: todayUserCreditAmount,
+      totalUserDebitAmount: totalUserDebitAmount,
+      todayUserDebitAmount: todayUserDebitAmount,
 
     });
   } catch (error) {

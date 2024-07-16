@@ -338,7 +338,7 @@ router.put('/status/update/:uuid', adminAuth, async (req, res) => {
     let validData = await UpdateSchema.validateAsync(req.body);
     console.log(validData)
 
-    await Credit.findOneAndUpdate({ uuid: uuid }, { approved_status: validData.approved_status });
+    await Credit.findOneAndUpdate({ uuid: uuid }, { approved_status: validData.approved_status, comments : validData.comments });
     return res.status(200).send({
       success: true,
       message: 'Successfully Updated.'

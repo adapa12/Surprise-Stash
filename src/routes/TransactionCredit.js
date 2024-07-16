@@ -7,7 +7,7 @@ const User = require('../models/User');
 const Credit = require('../models/TransactionCredit')
 const adminAuth = require('../middleware/auth.admin');
 const auth = require('../middleware/auth.middleware')
-
+const userAuth = require('../middleware/auth.user');
 
 router.post('/', auth, async (req, res) => {
   try {
@@ -43,7 +43,7 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-router.put('/update/:uuid', async (req, res) => {
+router.put('/update/:uuid',auth, async (req, res) => {
   try {
     const UpdateSchema = Joi.object({
       user_uuid: Joi.string().required(),
@@ -55,6 +55,14 @@ router.put('/update/:uuid', async (req, res) => {
       image: Joi.string().required(),
     });
     const validData = await UpdateSchema.validateAsync(req.body);
+
+    if (req.user && req.user.role === 'management') {
+      validData.approved_status = "Accepted";
+    }
+
+    if (req.user && req.user.role === 'user') {
+      validData.approved_status = "Pending";
+    }
 
     Credit.findOneAndUpdate({ uuid: req.params.uuid }, validData, { new: true })
       .then(data => {
@@ -99,7 +107,7 @@ router.get("/view/:uuid", async (req, res) => {
   }
 });
 
-router.get('/user/list', async (req, res) => {
+router.get('/user/list',userAuth, async (req, res) => {
   try {
     let { page, limit, search, user_uuid } = req.query;
 
@@ -202,7 +210,7 @@ router.get('/user/list', async (req, res) => {
   }
 });
 
-router.get('/admin/list', async (req, res) => {
+router.get('/admin/list',adminAuth, async (req, res) => {
   try {
     let { page, limit, search } = req.query;
 
@@ -287,7 +295,7 @@ router.get('/admin/list', async (req, res) => {
   }
 });
 
-router.put('/approved/status/:uuid', async (req, res) => {
+router.put('/approved/status/:uuid', adminAuth, async (req, res) => {
   try {
 
     const ApprovedSchema = Joi.object({
@@ -317,7 +325,7 @@ router.put('/approved/status/:uuid', async (req, res) => {
 
 });
 
-router.put('/status/update/:uuid', async (req, res) => {
+router.put('/status/update/:uuid', adminAuth, async (req, res) => {
   try {
 
     const uuid = req.params.uuid;

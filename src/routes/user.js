@@ -11,6 +11,7 @@ const sendOTPtoResetPassword = require('../helper/otp.pass');
 const Credit = require('../models/TransactionCredit')
 const Debit = require('../models/TransactionDebit')
 const sendSMS = require('../helper/mail')
+const auth = require('../middleware/auth.middleware')
 
 router.post('/register', adminAuth, async (req, res) => {
   try {
@@ -211,7 +212,7 @@ router.post('/login', async (req, res) => {
 });
 
 
-router.put('/change/password/:uuid', async (req, res) => {
+router.put('/change/password/:uuid',userAuth, async (req, res) => {
   try {
     const ChangePasswordSchema = Joi.object({
       oldPassword: Joi.string().required(),
@@ -354,7 +355,7 @@ router.post('/reset/password', async (req, res) => {
   }
 })
 
-router.get('/list', async (req, res) => {
+router.get('/list',adminAuth, async (req, res) => {
   try {
     let { page, limit, search } = req.query;
 
@@ -441,7 +442,7 @@ router.get('/list', async (req, res) => {
   }
 });
 
-router.get('/profile/:uuid', async (req, res) => {
+router.get('/profile/:uuid',auth, async (req, res) => {
   try {
     let uuid = req.params.uuid;
 

@@ -9,7 +9,7 @@ const adminAuth = require('../middleware/auth.admin');
 const userAuth = require('../middleware/auth.user');
 
 
-router.post('/', async (req, res) => {
+router.post('/', adminAuth, async (req, res) => {
   try {
     const DebitSchema = Joi.object({
       purpose: Joi.string().required(),
@@ -35,7 +35,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.put('/update/:uuid', async (req, res) => {
+router.put('/update/:uuid', adminAuth, async (req, res) => {
   try {
     const UpdateSchema = Joi.object({
       purpose: Joi.string().required(),
@@ -89,7 +89,7 @@ router.get("/view/:uuid", async (req, res) => {
   }
 });
 
-router.get('/list', async (req, res) => {
+router.get('/list',adminAuth, async (req, res) => {
   try {
     let { page, limit, search } = req.query;
 

@@ -53,6 +53,7 @@ router.put('/update/:uuid',auth, async (req, res) => {
       paid_number: Joi.string().required(),
       utr: Joi.string().required(),
       image: Joi.string().required(),
+      comments : Joi.string().allow("")
     });
     const validData = await UpdateSchema.validateAsync(req.body);
 

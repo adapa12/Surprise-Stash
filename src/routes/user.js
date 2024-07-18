@@ -53,7 +53,7 @@ router.post('/register', adminAuth, async (req, res) => {
         "email" : user.email,
     },
     };
-    await sendSMS(emailData);
+    // await sendSMS(emailData);
     // sendOTPtoResetPassword(req.body.email);
 
     return res.status(200).send({

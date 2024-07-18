@@ -7,6 +7,7 @@ const User = require('../models/User');
 const Debit = require('../models/TransactionDebit')
 const adminAuth = require('../middleware/auth.admin');
 const userAuth = require('../middleware/auth.user');
+const auth = require('../middleware/auth.middleware')
 
 
 router.post('/', adminAuth, async (req, res) => {
@@ -89,7 +90,7 @@ router.get("/view/:uuid", async (req, res) => {
   }
 });
 
-router.get('/list',adminAuth, async (req, res) => {
+router.get('/list',auth, async (req, res) => {
   try {
     let { page, limit, search } = req.query;
 

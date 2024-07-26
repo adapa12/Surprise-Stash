@@ -37,6 +37,7 @@ router.post('/register', adminAuth, async (req, res) => {
       status: false,
       message: "Mobile Number Already Exists!"
     });
+    validData.admin_uuid = req.user.uuid
     validData.password = "surprise";
     validData.password = await bcrypt.hash(validData.password, 10);
 
@@ -212,7 +213,7 @@ router.post('/login', async (req, res) => {
 });
 
 
-router.put('/change/password/:uuid',userAuth, async (req, res) => {
+router.put('/change/password/:uuid',auth, async (req, res) => {
   try {
     const ChangePasswordSchema = Joi.object({
       oldPassword: Joi.string().required(),
@@ -367,6 +368,7 @@ router.get('/list',adminAuth, async (req, res) => {
     let result = await User.aggregate([
       {
         $match: {
+          admin_uuid : req.user.uuid,
           role: "user",
           is_deleted: false,
           $or: [
@@ -415,6 +417,7 @@ router.get('/list',adminAuth, async (req, res) => {
       {
         $match: {
           role: "user",
+          admin_uuid : req.user.uuid,
           is_deleted: false,
           $or: [
             { "first_name": { $regex: `${search}`, $options: 'i' } },

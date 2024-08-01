@@ -22,7 +22,7 @@ module.exports = sendEmail = async (data) => {
 
       try {
         const transporter = nodemailer.createTransport({
-          service: "gmail",
+          service: "outlook",
           auth: {
             user: data.from_email,
             pass: data.password,

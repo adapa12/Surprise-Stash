@@ -2,12 +2,18 @@
 
 const mongoose = require('mongoose');
 const crypto = require('crypto');
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
+const { type } = require('os');
+const { required } = require('joi');
 
 const UserSchema = new mongoose.Schema({
     uuid : {
         type : String,
         unique : true,
+        required : false
+    },
+    admin_uuid : {
+        type : String,
         required : false
     },
     first_name : {

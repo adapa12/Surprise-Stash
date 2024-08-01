@@ -12,6 +12,10 @@ const TransactionCreditSchema = new mongoose.Schema({
         unique: true,
         required: false
     },
+    admin_uuid : {
+        type : String,
+        required : false
+    },
     user_uuid : {
         type : String,
         required : true

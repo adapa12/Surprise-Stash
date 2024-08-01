@@ -26,15 +26,29 @@ router.post('/', auth, async (req, res) => {
 
     if (req.user && req.user.role === 'management') {
       validData.approved_status = "Accepted";
+
+      validData.admin_uuid = req.user.uuid
+
+      let result = await Credit.create(validData);
+
+      return res.status(200).send({
+        status: true,
+        message: " Credited Bill Added Sucessfully",
+        data: result,
+      });
+    }
+    else {
+
+      let result = await Credit.create(validData);
+
+      return res.status(200).send({
+        status: true,
+        message: " Credited Bill Added Sucessfully",
+        data: result,
+      });
+
     }
 
-    let result = await Credit.create(validData);
-
-    return res.status(200).send({
-      status: true,
-      message: " Credited Bill Added Sucessfully",
-      data: result,
-    });
   } catch (error) {
     return res.status(400).send({
       status: false,
@@ -43,7 +57,7 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-router.put('/update/:uuid',auth, async (req, res) => {
+router.put('/update/:uuid', auth, async (req, res) => {
   try {
     const UpdateSchema = Joi.object({
       user_uuid: Joi.string().required(),
@@ -53,7 +67,7 @@ router.put('/update/:uuid',auth, async (req, res) => {
       paid_number: Joi.string().required(),
       utr: Joi.string().required(),
       image: Joi.string().required(),
-      comments : Joi.string().allow("")
+      comments: Joi.string().allow("")
     });
     const validData = await UpdateSchema.validateAsync(req.body);
 
@@ -108,7 +122,7 @@ router.get("/view/:uuid", async (req, res) => {
   }
 });
 
-router.get('/user/list',userAuth, async (req, res) => {
+router.get('/user/list', userAuth, async (req, res) => {
   try {
     let { page, limit, search, user_uuid } = req.query;
 
@@ -211,7 +225,7 @@ router.get('/user/list',userAuth, async (req, res) => {
   }
 });
 
-router.get('/admin/list',adminAuth, async (req, res) => {
+router.get('/admin/list', adminAuth, async (req, res) => {
   try {
     let { page, limit, search } = req.query;
 
@@ -223,6 +237,7 @@ router.get('/admin/list',adminAuth, async (req, res) => {
     let result = await Credit.aggregate([
       {
         $match: {
+          admin_uuid : req.user.uuid,
           is_deleted: false,
           $or: [
             { "amount": { $regex: `${search}`, $options: 'i' } },
@@ -273,6 +288,7 @@ router.get('/admin/list',adminAuth, async (req, res) => {
     let results = await Credit.aggregate([
       {
         $match: {
+          admin_uuid : req.user.uuid,
           is_deleted: false,
           $or: [
             { "amount": { $regex: `${search}`, $options: 'i' } }
@@ -339,7 +355,7 @@ router.put('/status/update/:uuid', adminAuth, async (req, res) => {
     let validData = await UpdateSchema.validateAsync(req.body);
     console.log(validData)
 
-    await Credit.findOneAndUpdate({ uuid: uuid }, { approved_status: validData.approved_status, comments : validData.comments });
+    await Credit.findOneAndUpdate({ uuid: uuid }, { approved_status: validData.approved_status, comments: validData.comments });
     return res.status(200).send({
       success: true,
       message: 'Successfully Updated.'

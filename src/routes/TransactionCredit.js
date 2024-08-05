@@ -227,17 +227,22 @@ router.get('/user/list', userAuth, async (req, res) => {
 
 router.get('/admin/list', adminAuth, async (req, res) => {
   try {
-    let { page, limit, search } = req.query;
+
+    let { page, limit, search, admin_uuid} = req.query;
 
     if (page == "" || page == undefined) page = 0;
     if (limit == "" || limit == undefined) limit = 10;
 
     let skip = Number(page) * Number(limit);
 
+    if (admin_uuid != "" && admin_uuid != undefined) {
+      match.admin_uuid = admin_uuid
+  }
+
     let result = await Credit.aggregate([
       {
         $match: {
-          admin_uuid : req.user.uuid,
+          // admin_uuid : req.user.uuid,
           is_deleted: false,
           $or: [
             { "amount": { $regex: `${search}`, $options: 'i' } },
@@ -288,7 +293,7 @@ router.get('/admin/list', adminAuth, async (req, res) => {
     let results = await Credit.aggregate([
       {
         $match: {
-          admin_uuid : req.user.uuid,
+          // admin_uuid : req.user.uuid,
           is_deleted: false,
           $or: [
             { "amount": { $regex: `${search}`, $options: 'i' } }

@@ -124,12 +124,40 @@ router.get("/view/:uuid", async (req, res) => {
 
 router.get('/user/list', userAuth, async (req, res) => {
   try {
-    let { page, limit, search, user_uuid } = req.query;
+    let { page, limit, search, user_uuid, fromdate, todate } = req.query;
 
     if (page == "" || page == undefined) page = 0;
     if (limit == "" || limit == undefined) limit = 10;
 
     let skip = Number(page) * Number(limit);
+
+    let match = {
+      user_uuid: user_uuid,
+      is_deleted: false,
+    }
+
+    if ((fromdate != "" && fromdate != undefined) && (todate != "" && todate != undefined)) {
+      const d = new Date(fromdate);
+      let de = d.getTime();
+      const e = new Date(todate);
+      let a = e.getTime();
+      if (de === a) {
+        console.log("====1====")
+        const startOfDay = new Date(d);
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date(d);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        match.createdAt = ({ $gte: startOfDay, $lt: endOfDay });
+      } else {
+        console.log("====2====");
+        todate = new Date(todate);
+        todate.setDate(todate.getDate() + 1);
+        match.createdAt = { $gte: new Date(`${fromdate}`), $lt: new Date(`${todate}`) }
+      }
+    }
+
 
     if (user_uuid == "" || user_uuid == undefined) {
       return res.status(400).send({
@@ -138,22 +166,9 @@ router.get('/user/list', userAuth, async (req, res) => {
       });
     }
 
-    let match = {
-      user_uuid: user_uuid,
-      is_deleted: false,
-    }
-
     let result = await Credit.aggregate([
       {
         $match: { ...match }
-      },
-      {
-        $match: {
-          is_deleted: false,
-          $or: [
-            { "amount": { $regex: `${search}`, $options: 'i' } },
-          ]
-        }
       },
       {
         $lookup: {
@@ -186,6 +201,14 @@ router.get('/user/list', userAuth, async (req, res) => {
         }
       },
       {
+        $match: {
+          $or: [
+            { "user.full_name": { $regex: `${search}`, $options: 'i' } },
+            { "amount": { $regex: `${search}`, $options: 'i' } }
+          ]
+        }
+      },
+      {
         $sort: { createdAt: -1 }
       },
       {
@@ -201,13 +224,21 @@ router.get('/user/list', userAuth, async (req, res) => {
         $match: { ...match }
       },
       {
+        $lookup: {
+          from: 'users',
+          localField: 'user_uuid',
+          foreignField: 'uuid',
+          as: 'user'
+        }
+      },
+      {
         $match: {
-          is_deleted: false,
           $or: [
+            { "user.full_name": { $regex: `${search}`, $options: 'i' } },
             { "amount": { $regex: `${search}`, $options: 'i' } }
           ]
         }
-      }
+      },
     ]);
 
     return res.status(200).send({
@@ -228,7 +259,7 @@ router.get('/user/list', userAuth, async (req, res) => {
 router.get('/admin/list', adminAuth, async (req, res) => {
   try {
 
-    let { page, limit, search, admin_uuid, fromdate, todate } = req.query;
+    let { page, limit, search, admin_uuid, fromdate, todate, user_uuid} = req.query;
 
     if (page == "" || page == undefined) page = 0;
     if (limit == "" || limit == undefined) limit = 10;
@@ -259,6 +290,10 @@ router.get('/admin/list', adminAuth, async (req, res) => {
         todate.setDate(todate.getDate() + 1);
         match.createdAt = { $gte: new Date(`${fromdate}`), $lt: new Date(`${todate}`) }
       }
+    }
+
+    if (user_uuid != "" && user_uuid != undefined) {
+      match.user_uuid = user_uuid
     }
 
     if (admin_uuid != "" && admin_uuid != undefined) {

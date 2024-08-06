@@ -92,21 +92,44 @@ router.get("/view/:uuid", async (req, res) => {
 
 router.get('/list',auth, async (req, res) => {
   try {
-    let { page, limit, search } = req.query;
+    let { page, limit, search, fromdate, todate } = req.query;
 
     if (page == "" || page == undefined) page = 0;
     if (limit == "" || limit == undefined) limit = 10;
 
     let skip = Number(page) * Number(limit);
 
+    
+    let match = {
+      is_deleted: false,
+    }
+
+    if ((fromdate != "" && fromdate != undefined) && (todate != "" && todate != undefined)) {
+      const d = new Date(fromdate);
+      let de = d.getTime();
+      const e = new Date(todate);
+      let a = e.getTime();
+      if (de === a) {
+        console.log("====1====")
+        const startOfDay = new Date(d);
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date(d);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        match.createdAt = ({ $gte: startOfDay, $lt: endOfDay });
+      } else {
+        console.log("====2====");
+        todate = new Date(todate);
+        todate.setDate(todate.getDate() + 1);
+        match.createdAt = { $gte: new Date(`${fromdate}`), $lt: new Date(`${todate}`) }
+      }
+    }
+
+
     let result = await Debit.aggregate([
       {
-        $match: {
-          is_deleted: false,
-          $or: [
-            { "amount": { $regex: `${search}`, $options: 'i' } },
-          ]
-        }
+        $match: { ...match }
       },
       {
         "$set": {
@@ -131,6 +154,13 @@ router.get('/list',auth, async (req, res) => {
         }
       },
       {
+        $match: {
+          $or: [
+            { "amount": { $regex: `${search}`, $options: 'i' } }
+          ]
+        }
+      },
+      {
         $sort: { createdAt: -1 }
       },
       {
@@ -143,13 +173,15 @@ router.get('/list',auth, async (req, res) => {
 
     let results = await Debit.aggregate([
       {
+        $match: { ...match }
+      },
+      {
         $match: {
-          is_deleted: false,
           $or: [
             { "amount": { $regex: `${search}`, $options: 'i' } }
           ]
         }
-      }
+      },
     ]);
 
     return res.status(200).send({

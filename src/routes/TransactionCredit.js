@@ -259,7 +259,7 @@ router.get('/user/list', userAuth, async (req, res) => {
 router.get('/admin/list', adminAuth, async (req, res) => {
   try {
 
-    let { page, limit, search, admin_uuid, fromdate, todate, user_uuid} = req.query;
+    let { page, limit, search, admin_uuid, fromdate, todate, user_uuid, approved_status } = req.query;
 
     if (page == "" || page == undefined) page = 0;
     if (limit == "" || limit == undefined) limit = 10;
@@ -294,6 +294,10 @@ router.get('/admin/list', adminAuth, async (req, res) => {
 
     if (user_uuid != "" && user_uuid != undefined) {
       match.user_uuid = user_uuid
+    }
+
+    if (approved_status != "" && approved_status != undefined) {
+      match.approved_status = approved_status
     }
 
     if (admin_uuid != "" && admin_uuid != undefined) {

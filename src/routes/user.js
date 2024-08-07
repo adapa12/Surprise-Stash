@@ -358,27 +358,25 @@ router.post('/reset/password', async (req, res) => {
 
 router.get('/list',adminAuth, async (req, res) => {
   try {
-    let { page, limit, search } = req.query;
+    let { page, limit, search, active } = req.query;
 
     if (page == "" || page == undefined) page = 0;
     if (limit == "" || limit == undefined) limit = 10;
 
     let skip = Number(page) * Number(limit);
 
+    let match = {
+      is_deleted: false,
+      role : "user"
+    }
+
+    if (active !== "" && active != undefined) {
+      match.is_active = JSON.parse(active);
+  }
+
     let result = await User.aggregate([
       {
-        $match: {
-          admin_uuid : req.user.uuid,
-          role: "user",
-          is_deleted: false,
-          $or: [
-            { "first_name": { $regex: `${search}`, $options: 'i' } },
-            { "last_name": { $regex: `${search}`, $options: 'i' } },
-            { "full_name": { $regex: `${search}`, $options: 'i' } },
-            { "email": { $regex: `${search}`, $options: 'i' } },
-            { "mobile": { $regex: `${search}`, $options: 'i' } },
-          ]
-        }
+        $match: { ...match }
       },
       {
         "$set": {
@@ -403,6 +401,17 @@ router.get('/list',adminAuth, async (req, res) => {
         }
       },
       {
+        $match: {
+          $or: [
+            { "first_name": { $regex: `${search}`, $options: 'i' } },
+            { "last_name": { $regex: `${search}`, $options: 'i' } },
+            { "full_name": { $regex: `${search}`, $options: 'i' } },
+            { "email": { $regex: `${search}`, $options: 'i' } },
+            { "mobile": { $regex: `${search}`, $options: 'i' } },
+          ]
+        }
+      },
+      {
         $sort: { createdAt: -1 }
       },
       {
@@ -415,10 +424,10 @@ router.get('/list',adminAuth, async (req, res) => {
 
     let results = await User.aggregate([
       {
+        $match: { ...match }
+      },
+      {
         $match: {
-          role: "user",
-          admin_uuid : req.user.uuid,
-          is_deleted: false,
           $or: [
             { "first_name": { $regex: `${search}`, $options: 'i' } },
             { "last_name": { $regex: `${search}`, $options: 'i' } },
@@ -427,7 +436,7 @@ router.get('/list',adminAuth, async (req, res) => {
             { "mobile": { $regex: `${search}`, $options: 'i' } },
           ]
         }
-      }
+      },
     ]);
 
     return res.status(200).send({
